@@ -7,7 +7,7 @@ void main() {
   runApp(
     MaterialApp(
       home: MyHomePage(
-        key: UniqueKey(), // Truyền giá trị key vào đây
+        key: UniqueKey(),
         title: "Calculator",
       ),
     ),
