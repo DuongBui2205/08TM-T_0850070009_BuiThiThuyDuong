@@ -23,7 +23,7 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  final String apiKey = "644c8f4db2c9b952f122fdb27a9e0baa";
+  final String apiKey = "f15e0f90186f3d5bda97e20ad6d9f652";
   String city = "";
 
   Future<Map<String, dynamic>> _getWeatherData(String city) async {
