@@ -2,79 +2,91 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-void main() {
-  runApp(WeatherApp());
-}
+void main() => runApp(MyApp());
 
-class WeatherApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Dự báo thời tiết',
+      title: 'Weather App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: WeatherForecastScreen(),
+      home: WeatherScreen(),
     );
   }
 }
 
-class WeatherForecastScreen extends StatefulWidget {
+class WeatherScreen extends StatefulWidget {
   @override
-  _WeatherForecastScreenState createState() => _WeatherForecastScreenState();
+  _WeatherScreenState createState() => _WeatherScreenState();
 }
 
-class _WeatherForecastScreenState extends State<WeatherForecastScreen> {
-  TextEditingController _locationController = TextEditingController();
-  String _weatherData = '';
+class _WeatherScreenState extends State<WeatherScreen> {
+  final String apiKey = "644c8f4db2c9b952f122fdb27a9e0baa";
+  String city = "";
 
-  final apiKey = 'f15e0f90186f3d5bda97e20ad6d9f652'; // Khởi tạo API key của bạn ở đây
-
-  void _fetchWeatherData() async {
-    final city = _locationController.text;
-
-    final apiUrl = 'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey';
-
+  Future<Map<String, dynamic>> _getWeatherData(String city) async {
+    final apiUrl =
+        "http://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric";
     final response = await http.get(Uri.parse(apiUrl));
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      setState(() {
-        _weatherData = 'Thời tiết tại $city: ${data['weather'][0]['description']}';
-      });
+      return json.decode(response.body);
     } else {
-      setState(() {
-        _weatherData = 'Không thể lấy dữ liệu thời tiết. Vui lòng thử lại sau.';
-      });
+      throw Exception('Failed to load data');
     }
+  }
+
+  void _onSubmit() {
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Dự báo thời tiết'),
+        title: Text('Weather App'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                labelText: 'Nhập tên thành phố',
+            TextFormField(
+              decoration: InputDecoration(labelText: 'Enter location'),
+              onChanged: (value) => city = value,
+              onFieldSubmitted: (_) => _onSubmit(),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: FutureBuilder<Map<String, dynamic>>(
+                future: _getWeatherData(city),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else {
+                    var weatherData = snapshot.data;
+                    var temperature = weatherData?['main']?['temp'];
+                    var humidity = weatherData?['main']?['humidity'];
+                    var description = weatherData?['weather']?[0]?['description'];
+
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('City: $city'),
+                          Text('Temperature: ${temperature ?? 'N/A'}°C'),
+                          Text('Moisture: ${humidity ?? 'N/A'}%'),
+                          Text('Weather Status: ${description ?? 'N/A'}'),
+                        ],
+                      ),
+                    );
+                  }
+                },
               ),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _fetchWeatherData,
-              child: Text('Lấy dự báo thời tiết'),
-            ),
-            SizedBox(height: 20),
-            Text(
-              _weatherData,
-              style: TextStyle(fontSize: 18),
             ),
           ],
         ),
